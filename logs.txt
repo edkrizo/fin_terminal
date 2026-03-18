@@ -1,0 +1,15 @@
+nohup: ignoring input
+/home/admin_edouardg_altostrat_com/CUSTOMERS/TUESDAY_17/V1/mercury-workspace/.venv/lib/python3.12/site-packages/google/cloud/aiplatform/models.py:52: FutureWarning: Support for google-cloud-storage < 3.0.0 will be removed in a future version of google-cloud-aiplatform. Please upgrade to google-cloud-storage >= 3.0.0.
+  from google.cloud.aiplatform.utils import gcs_utils
+⚙️ Initializing Local Mercury Backend...
+🔧 [LOCAL DEV] Intercepted FactSet Auth. Routing to: /home/admin_edouardg_altostrat_com/CUSTOMERS/TUESDAY_17/V1/mercury-workspace/shared_conf/config.json
+/home/admin_edouardg_altostrat_com/CUSTOMERS/TUESDAY_17/V1/mercury-workspace/local_server.py:148: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+✅ Local Mock Server running on http://127.0.0.1:8080
+INFO:     Will watch for changes in these directories: ['/home/admin_edouardg_altostrat_com/CUSTOMERS/TUESDAY_17/V1/mercury-workspace']
+ERROR:    [Errno 98] Address already in use
