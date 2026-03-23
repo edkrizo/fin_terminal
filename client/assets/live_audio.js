@@ -2,8 +2,22 @@ window.mercuryAudioContext = null;
 window.mercuryMicStream = null;
 window.mercuryWebSocket = null;
 window.mercuryNextPlayTime = 0;
+window.mercuryLastSpeechTime = Date.now();
+window.mercuryIdlePingInterval = null;
 
-// 🚀 THE FIX 1: Accept the persona and dashboardContext arguments from Python
+/**
+ * Initializes the WebRTC and WebSocket engine for Gemini Multimodal Live.
+ * 
+ * 1. Prompts the user for OS microphone access.
+ * 2. Establishes a raw WebSocket proxy tunnel via the FastAPI /ws/live endpoint.
+ * 3. Injects the active state of the user's dashboard straight into Gemini's memory.
+ * 4. Resamples the local Float32 microphone buffer to strict 16kHz PCM binaries needed by Vertex.
+ * 5. Handles inbound WebSocket JSON objects instructing Reflex to 'trigger_massive_query' 
+ *    or 'switch_view' to manipulate the frontend purely via Agentic commands.
+ * 
+ * @param {string} persona - Explicit persona profile (e.g. Fundamental Analyst)
+ * @param {string} dashboardContext - Escaped JSON string of the active UI tables/news
+ */
 window.startMercuryLive = async function(persona, dashboardContext) {
     console.log(`🎙️ Requesting microphone access for Persona: ${persona}...`);
     
@@ -28,11 +42,40 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                 // Send the JSON string to the server so it can be pushed into Gemini's memory
                 window.mercuryWebSocket.send(dashboardContext);
             }
+            
+            // ⏸️ Pause the podcast explicitly if it was playing since they are interrupting it
+            const audioEls = document.querySelectorAll('audio');
+            if (audioEls.length > 0) {
+                console.log("⏸️ Pausing podcast audio for interruption...");
+                try { audioEls[0].pause(); } catch(e) {}
+            }
+            
+            // --- IDLE STATUS PINGER ---
+            if (window.mercuryIdlePingInterval) clearInterval(window.mercuryIdlePingInterval);
+            window.mercuryLastSpeechTime = Date.now();
+            window.mercuryIdlePingInterval = setInterval(() => {
+                if (!window.mercuryWebSocket || window.mercuryWebSocket.readyState !== WebSocket.OPEN) return;
+                
+                // Do not ping if the AI is actively speaking
+                if (window.mercuryNextPlayTime > window.mercuryAudioContext.currentTime) return;
+                
+                const now = Date.now();
+                const silentSeconds = (now - window.mercuryLastSpeechTime) / 1000;
+                
+                // If the user has been silent for 10 seconds, send an async status ping
+                if (silentSeconds > 10) {
+                    const pingPayload = JSON.stringify({
+                         "action": "idle_ping"
+                    });
+                    window.mercuryWebSocket.send(pingPayload);
+                    window.mercuryLastSpeechTime = now; // reset timer to prevent spamming
+                }
+            }, 5000);
         };
 
         // 4. Capture and Resample Mic Audio
         const source = window.mercuryAudioContext.createMediaStreamSource(window.mercuryMicStream);
-        const processor = window.mercuryAudioContext.createScriptProcessor(4096, 1, 1);
+        const processor = window.mercuryAudioContext.createScriptProcessor(1024, 1, 1);
         
         source.connect(processor);
         processor.connect(window.mercuryAudioContext.destination);
@@ -48,11 +91,21 @@ window.startMercuryLive = async function(persona, dashboardContext) {
 
                 const inputData = e.inputBuffer.getChannelData(0);
                 
+                // Track Voice Activity locally to reset the idle timer
+                let isSpeaking = false;
+                
                 // CRITICAL: Convert Float32 to PCM 16-bit
                 const pcm16 = new Int16Array(inputData.length);
                 for (let i = 0; i < inputData.length; i++) {
-                    pcm16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
+                    const sample = inputData[i];
+                    if (Math.abs(sample) > 0.05) isSpeaking = true;
+                    pcm16[i] = Math.max(-1, Math.min(1, sample)) * 32767;
                 }
+                
+                if (isSpeaking) {
+                    window.mercuryLastSpeechTime = Date.now();
+                }
+                
                 window.mercuryWebSocket.send(pcm16.buffer);
             }
         };
@@ -63,7 +116,7 @@ window.startMercuryLive = async function(persona, dashboardContext) {
             // CHECK 1: Did the server send a TEXT command to close the mic?
             if (typeof event.data === "string") {
                 if (event.data === "CLOSE_MIC") {
-                    console.log("🛑 Gemini finished speaking. Auto-closing microphone...");
+                    console.log("🛑 Gemini requested closing session. Auto-closing microphone...");
                     
                     // 🚀 THE FIX: Use innerText for robust button selection in React/Reflex
                     const buttons = Array.from(document.querySelectorAll('button'));
@@ -72,6 +125,15 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                     if (stopBtn) {
                         console.log("👉 Simulating click on Stop Interrupt button...");
                         stopBtn.click();
+                        
+                        // ▶️ Auto-resume the podcast natively!
+                        setTimeout(() => {
+                            const audioEls = document.querySelectorAll('audio');
+                            if (audioEls.length > 0) {
+                                console.log("▶️ Resuming podcast audio automatically...");
+                                try { audioEls[0].play(); } catch(e) {}
+                            }
+                        }, 500); // 500ms delay to allow Reflex state to finalize
                     } else {
                         console.log("⚠️ Could not find 'Stop Interrupt' button to auto-close mic.");
                     }
@@ -105,6 +167,19 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                                 setTimeout(() => { triggerBtn.click(); }, 100);
                             }
                             return;
+                         } else if (data.action === "trigger_massive_query") {
+                             console.log("🚀 Agent requested massive async query:", data);
+                             const inputQuery = document.getElementById("live_massive_query_input");
+                             const triggerBtn = document.getElementById("live_massive_trigger_btn");
+                             if (inputQuery && triggerBtn) {
+                                  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+                                  // Clear input then set the massive query
+                                  nativeInputValueSetter.call(inputQuery, data.query || "");
+                                  inputQuery.dispatchEvent(new Event('input', { bubbles: true }));
+                                  
+                                  setTimeout(() => { triggerBtn.click(); }, 100);
+                             }
+                             return;
                          }
                     } catch (e) {
                          console.error("Failed to parse socket command:", e);

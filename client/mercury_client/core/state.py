@@ -72,44 +72,6 @@ class AppState(rx.State):
 
     # 🎙️ Podcast Memory Context (Discuss Live triggers)
     current_podcast_script: str = ""
-    wealth_clients: List[Dict] = [
-        {"name": "Sarah Jenkins", "asset": "$4.5M", "risk": "Moderate", "drift": "+2.4%", "status": "Review"},
-        {"name": "Michael Chen", "asset": "$12.1M", "risk": "Aggressive", "drift": "-1.5%", "status": "Aligned"},
-        {"name": "Robert Taylor", "asset": "$8.2M", "risk": "Conservative", "drift": "+0.8%", "status": "Aligned"},
-        {"name": "David Miller", "asset": "$1.4M", "risk": "Moderate", "drift": "+3.2%", "status": "Review"}
-    ]
-    wealth_alerts: List[Dict] = [
-        {"title": "Tax Loss Harvesting Alert", "time": "9:00 AM", "body": "Michael Chen's portfolio has $15k in offset ready for harvesting."},
-        {"title": "Required Minimum Distribution (RMD) Due", "time": "11:30 AM", "body": "Sarah Jenkins is approaching RMD window thresholds."}
-    ]
-
-    # 📈 Macro Strategist Data Backboards
-    macro_alerts: List[Dict] = [
-        {"title": "US CPI Prints 3.2% vs 3.1% Exp", "time": "8:30 AM", "body": "Core inflation remains sticky in shelter and services index."},
-        {"title": "Sovereign Yield Inversion Persists", "time": "10:15 AM", "body": "US 10Y/2Y spread sitting at -38bps signaling recessionary buffers."}
-    ]
-    sovereign_yields: List[Dict] = [
-        {"country": "US 10Y", "yield": "4.25%", "chg": "+0.05", "trend": "positive"},
-        {"country": "US 2Y", "yield": "4.63%", "chg": "+0.02", "trend": "positive"},
-        {"country": "GER 10Y", "yield": "2.42%", "chg": "-0.01", "trend": "negative"},
-        {"country": "UK 10Y", "yield": "4.11%", "chg": "+0.04", "trend": "positive"}
-    ]
-
-    @rx.var
-    def live_wealth_alerts(self) -> List[Dict[str, str]]:
-        return self.wealth_alerts
-
-    @rx.var
-    def live_wealth_clients(self) -> List[Dict[str, str]]:
-        return self.wealth_clients
-
-    @rx.var
-    def live_macro_alerts(self) -> List[Dict[str, str]]:
-        return self.macro_alerts
-
-    @rx.var
-    def live_sovereign_yields(self) -> List[Dict[str, str]]:
-        return self.sovereign_yields
 
     @rx.var
     def sidebar_menu(self) -> List[Dict[str, Any]]:
@@ -494,7 +456,7 @@ class AppState(rx.State):
         
         except httpx.TimeoutException:
             temp_data = dict(self.agent_data)
-            temp_data["insights"] = "<b>Timeout Error:</b> The backend took too long to respond. Please restart your local_server.py."
+            temp_data["insights"] = "<b>Timeout Error:</b> The backend took too long to respond. Please restart your app.py."
             self.agent_data = temp_data
         except Exception as e:
             temp_data = dict(self.agent_data)
