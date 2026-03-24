@@ -18,7 +18,7 @@ from google.genai import types
 RUN_PARALLEL = True
 
 # 🚀 1. FORCE ENTERPRISE VERTEX AI MODE AND GLOBAL REGION
-os.environ["GOOGLE_CLOUD_PROJECT"] = "facset-playground"
+os.environ["GOOGLE_CLOUD_PROJECT"] = "GCP_PROJECT"
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"  
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 
