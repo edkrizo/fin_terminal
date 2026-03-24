@@ -4,7 +4,6 @@ This repository contains the lightweight MVP of the Copilot Terminal demo, built
 
 ## 🌟 Recent Architecture Updates
 To optimize the workspace for a clean, public-facing demonstration, the backend has been thoroughly scrubbed and modularized:
-- **Pruned Dead Code**: All proprietary integrations, FactSet SDK mocking, YouTube/Video parsing agents, and obsolete background caching loops have been entirely removed.
 - **Slimmed `app.py`**: The core FastAPI application is now a clean, minimal hub (<200 lines) dedicated purely to wiring together external routers.
 - **Modularized Endpoints**: The Podcast Generator and WebRTC Live Voice WebSocket logic have been extracted into dedicated API Routers (`podcast_router.py` and `live_agent.py`).
 - **Unified Master Dashboard**: The complex "persona" navigation and sub-routing have been flattened into a single, cohesive view (`financial_dashboard.py`).
