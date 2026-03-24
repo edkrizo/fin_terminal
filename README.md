@@ -14,13 +14,17 @@ To optimize the workspace for a clean, public-facing demonstration, the backend 
 
 To run the Podcast Generator and Gemini Live Agent, you must authenticate to a Google Cloud Project with the Vertex AI and Text-to-Speech APIs enabled. 
 
-In `app.py` and `podcast_tools.py`, the environment expects the following:
-```python
-os.environ["GOOGLE_CLOUD_PROJECT"] = "YOUR_GCP_PROJECT_ID"
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"  
-os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
+In `app.py`, the environment is dynamically read from `.env`:
+```bash
+# 1. Copy the example environment file
+cp .env.example .env
+
+# 2. Modify .env to include your actual GCP Project ID
+GOOGLE_CLOUD_PROJECT="factset-production-12345"
+GOOGLE_CLOUD_LOCATION="global"
 ```
-**CRITICAL:** Ensure your default authentication strategy supports access to the target Vertex AI project. Replace `YOUR_GCP_PROJECT_ID` with the actual GCP project ID prior to deploying or running the application locally.
+
+**CRITICAL:** Replace the placeholder in `.env` with your actual GCP project ID prior to deploying or running the application locally. Ensure your default authentication strategy supports access to the target Vertex AI project.
 
 ## 🔄 System Architecture
 

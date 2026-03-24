@@ -29,13 +29,16 @@ RUN_PARALLEL = True
 # ---------------------------------------------------------
 # 1. ENVIRONMENT CONFIGURATION
 # ---------------------------------------------------------
+# Pull the GCP Project ID from the environment (e.g. via .env file)
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "YOUR_GCP_PROJECT_ID")
+
 # Force Enterprise Vertex AI Mode and designate global region for deployment
-os.environ["GOOGLE_CLOUD_PROJECT"] = "YOUR_GCP_PROJECT_ID"
-os.environ["GOOGLE_CLOUD_LOCATION"] = "global"  
+os.environ["GOOGLE_CLOUD_PROJECT"] = PROJECT_ID
+os.environ["GOOGLE_CLOUD_LOCATION"] = os.getenv("GOOGLE_CLOUD_LOCATION", "global")
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 
 import vertexai
-vertexai.init(project="{YOUR_GCP_PROJECT_ID}", location="global") 
+vertexai.init(project=PROJECT_ID, location=os.environ["GOOGLE_CLOUD_LOCATION"]) 
 
 # ---------------------------------------------------------
 # 2. BACKEND AGENT INITIALIZATION
