@@ -1,5 +1,5 @@
 import reflex as rx
-from mercury_client.core.state import AppState
+from copilot_client.core.state import AppState
 
 def kpi_block(label: str, value: str, subtext: str, value_color: str = "#111") -> rx.Component:
     return rx.box(
@@ -44,7 +44,7 @@ def daily_audio_brief_player() -> rx.Component:
         rx.hstack(
             rx.box(rx.icon("headphones", size=18, color="#FFF"), bg="#005A9C", padding="8px", border_radius="8px"),
             rx.vstack(
-                rx.text("Mercury Audio Briefing", font_size="12px", font_weight="bold", color="#111"), 
+                rx.text("Copilot Audio Briefing", font_size="12px", font_weight="bold", color="#111"), 
                 rx.text("Daily Data Podcast", font_size="10px", color="#666"), 
                 spacing="0"
             ),

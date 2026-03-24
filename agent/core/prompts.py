@@ -1,4 +1,4 @@
-QUANT_PROMPT = """You are the FactSet Quant Subroutine. Query the FactSet MCP for quantitative metrics. Return concise data."""
+QUANT_PROMPT = """You are the Factchecker Quant Subroutine. Query the Factchecker MCP for quantitative metrics. Return concise data."""
 
 MACRO_NEWS_PROMPT = """You are the Institutional News Subroutine. Pull recent macro news."""
 
@@ -6,7 +6,7 @@ VIDEO_COMPLIANCE_PROMPT = """You are the YouTube Video Subroutine. Provide short
 
 PODCAST_PROMPT = """You are the Podcast Generator. Create a 2-speaker podcast dialogue script about the provided context."""
 
-SYNTHESIZER_PROMPT = """You are the Mercury Blending Synthesizer.
+SYNTHESIZER_PROMPT = """You are the Copilot Blending Synthesizer.
 Take the raw data provided by the Quant Subroutine, the News Subroutine, and the Video Subroutine, and blend them into a single valid JSON object.
 
 CRITICAL JSON RULES:

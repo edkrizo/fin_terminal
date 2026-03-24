@@ -7,9 +7,9 @@ logger = logging.getLogger(__name__)
 # ==========================================
 # MULTI-AGENT BACKEND ROUTER
 # ==========================================
-class MercuryTerminalBackend:
+class CopilotTerminalBackend:
     """
-    The Specialized backend router for the Mercury FactSet Podcast and Live Chat Demo.
+    The Specialized backend router for the Copilot Factchecker Podcast and Live Chat Demo.
     Initializes offline AI models to power the main dashboard prior to Audio generation.
     """
     def __init__(self):
@@ -23,7 +23,7 @@ class MercuryTerminalBackend:
 
         self.quant_agent = LlmAgent(
             model="gemini-2.5-pro", 
-            name="FactSet_Quant",
+            name="Factchecker_Quant",
             instruction=QUANT_PROMPT,
             tools=[]
         )
@@ -44,7 +44,7 @@ class MercuryTerminalBackend:
 
         self.synth_agent = LlmAgent(
             model="gemini-3.1-flash-lite-preview", 
-            name="Mercury_Synthesizer",
+            name="Copilot_Synthesizer",
             instruction=SYNTHESIZER_PROMPT,
             tools=[]
         )

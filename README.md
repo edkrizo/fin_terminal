@@ -1,6 +1,13 @@
-# Mercury Live Financial Podcast MVP
+# Copilot Live Financial Podcast MVP
 
-This repository contains the stripped-down, lightweight MVP of the Mercury Terminal demo. It is designed to run entirely locally, allowing users to upload a document, generate a synthetic two-speaker financial podcast about that document, and seamlessly interrupt the podcast using their microphone to "talk live" with the host (Jane) via the Gemini Multimodal Live API.
+This repository contains the lightweight MVP of the Copilot Terminal demo, built for public demonstration. It is designed to run locally, allowing users to upload a financial document, generate a synthetic two-speaker financial podcast summarizing the document, and seamlessly interrupt the podcast using their microphone to "talk live" with the host (Jane) via the Gemini Multimodal Live API.
+
+## 🌟 Recent UI Updates
+To optimize the workspace for a clean, public-facing demonstration:
+- **Unified Master Dashboard**: The complex "persona" navigation and sub-routing have been flattened into a single, cohesive view (`financial_dashboard.py`).
+- **Sidebar Removed**: The left-hand navigation pane was removed entirely to expand the main workspace area.
+- **Hero Actions**: The **Document Upload** and **Generate Podcast** widgets have been elevated to the top of the interface for immediate visibility.
+- **Brand Scrubbing**: All explicit customer branding has been generalized (e.g., using "Factchecker" and "Platform Signal").
 
 ## 🚀 Setting Up the Google Cloud Project ID
 
@@ -17,17 +24,19 @@ vertexai.init(project="YOUR_CUSTOMER_PROJECT_ID_HERE", location="global")
 ```
 **CRITICAL:** Replace `"YOUR_CUSTOMER_PROJECT_ID_HERE"` with the actual customer's GCP Project ID before running the application.
 
-## 📂 Minimum Viability Folder Structure
+## 🔄 System Architecture
 
-This workspace has been aggressively pruned to only include the necessary components to run the native Audio/Live MVP. Everything else has been scrubbed.
+![Copilot System Architecture](assets/architecture.png)
+
+This premium architecture diagram illustrates the secure, cloud-native connection between the React/Reflex frontend, the Python FastAPI central hub, and the Google Cloud AI primitives (Gemini 1.5 Pro and Google Vertex TTS) powering the document ingestion, podcast generation, and WebRTC live voice interruption flows.
+
+## 📂 Architecture & Folder Structure
 
 ```text
-mercury-workspace/
+copilot-workspace/
 │
 ├── app.py                      # 🌟 KEY MVP FILE: Main FastAPI server. Routes the UI endpoints and triggers the podcast generator.
 ├── pyproject.toml              # Python dependency file for `uv`.
-│
-├── .venv/                      # (IGNORE) Auto-generated Python virtual environment.
 │
 ├── agent/                      # 🧠 THE AI BACKEND
 │   ├── core/
@@ -40,18 +49,14 @@ mercury-workspace/
 └── client/                     # 🖥️ THE REFLEX FRONTEND
     ├── rxconfig.py             # Reflex configuration.
     ├── assets/                 # Where the generated `podcast.wav` files are temporarily stored and served.
-    ├── .web/                   # (IGNORE) Auto-generated Next.js build compilation created by Reflex.
-    ├── .states/                # (IGNORE) Auto-generated Reflex state cache.
-    └── mercury_client/
-        ├── mercury_client.py   # The master root layout configuration for the browser app.
+    └── copilot_client/
+        ├── copilot_client.py   # The master root layout configuration for the browser app.
         ├── core/
         │   └── state.py        # Brain of the frontend. Manages variables, button clicks, and WebSocket payloads.
         └── components/
-            ├── financial_dashboard.py  # The main dashboard router view.
-            ├── podcast_view.py         # 🌟 KEY MVP FILE: Renders the HTML audio player and the "Interrupt & Discuss Live" UI triggers.
-            ├── sidebar.py              # The left-hand navigation pane.
-            └── personas/
-                └── fundamental.py      # The primary minimal viable layout containing the data charts and tables.
+            ├── financial_dashboard.py  # The unified, single-page dashboard containing all charts and metrics.
+            ├── shared.py               # Houses the elevated Hero Widgets (Audio Player, Document Upload).
+            └── chat_interface.py       # The persistent text-based chat interface.
 ```
 
 ## 🛠️ How to Run the Application Locally
@@ -70,9 +75,3 @@ cd client
 uv run reflex run
 ```
 *Reflex will compile the UI and launch a browser window typically at `http://localhost:3000`.*
-
-### Using the MVP
-1. Upload a valid financial document (ie. a 10K PDF or research report) via the dashboard upload widget.
-2. Click **Generate Podcast**. You will see the backend synthesize the dual-speaker `.wav` file.
-3. Once the Audio Player appears, hit play.
-4. While the podcast is running, click **Interrupt & Discuss Live** to pause the media player, open your microphone, and converse live with Jane about the podcast topic!

@@ -1,14 +1,14 @@
 import reflex as rx
-from mercury_client.core.state import AppState
+from copilot_client.core.state import AppState
 
 def render_chat_message() -> rx.Component:
-    """Renders the main insight/response from Mercury inside a clean card."""
+    """Renders the main insight/response from Copilot inside a clean card."""
     return rx.box(
         # Header for the Insights Card
         rx.hstack(
             rx.hstack(
                 rx.icon("sparkles", size=14, color="#005A9C"),
-                rx.text("MERCURY INSIGHTS", font_size="11px", font_weight="800", color="#005A9C", letter_spacing="0.5px"),
+                rx.text("COPILOT INSIGHTS", font_size="11px", font_weight="800", color="#005A9C", letter_spacing="0.5px"),
                 align_items="center", spacing="2"
             ),
             rx.spacer(),
@@ -95,11 +95,11 @@ def render_user_prompt() -> rx.Component:
     )
 
 def render_chat_interface() -> rx.Component:
-    """The main Mercury Chat / Voice sidebar layout."""
+    """The main Copilot Chat / Voice sidebar layout."""
     return rx.vstack(
         # --- Top-Right Watermark ---
         rx.hstack(
-            rx.text("FactSet Workstation™ is powered by", font_size="10px", color="#94A3B8"),
+            rx.text("Factchecker Workstation™ is powered by", font_size="10px", color="#94A3B8"),
             rx.text("Gemini 3.1 Pro", font_size="10px", color="#3B82F6", font_weight="bold"),
             width="100%", justify_content="flex-end", margin_bottom="5px", spacing="1", flex_shrink="0"
         ),
@@ -192,18 +192,18 @@ def render_chat_interface() -> rx.Component:
             width="100%", height="100%", overflow_y="auto", padding_right="5px", padding_bottom="10px"
         ),
 
-        # --- "Ask Mercury" Command Card ---
+        # --- "Ask Copilot" Command Card ---
         rx.box(
             rx.vstack(
                 rx.hstack(
                     rx.icon("sparkles", size=16, color="#3B82F6"),
-                    rx.text("Ask Mercury", font_weight="bold", font_size="14px", color="#111827"),
+                    rx.text("Ask Copilot", font_weight="bold", font_size="14px", color="#111827"),
                     align_items="center", spacing="2", margin_bottom="10px"
                 ),
                 rx.form(
                     rx.vstack(
                         rx.input(
-                            placeholder="ASK Mercury...",
+                            placeholder="ASK Copilot...",
                             value=AppState.search_box_main,
                             on_change=AppState.set_search_box_main,
                             bg="#FFFFFF", border="1px solid #CBD5E1", font_size="13px",

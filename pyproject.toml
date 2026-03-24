@@ -1,7 +1,7 @@
 [project]
-name = "mercury-workspace"
+name = "copilot-workspace"
 version = "0.1.0"
-description = "FactSet A2A Agent Backend and Reflex Frontend Workspace"
+description = "Factchecker A2A Agent Backend and Reflex Frontend Workspace"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastapi>=0.135.1",

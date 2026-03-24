@@ -1,12 +1,12 @@
 import reflex as rx
-from mercury_client.core.state import AppState
+from copilot_client.core.state import AppState
 
 def video_card(video_id: str) -> rx.Component:
-    """A sleek, FactSet-style media player for institutional broadcasts."""
+    """A sleek, Factchecker-style media player for institutional broadcasts."""
     return rx.box(
         rx.hstack(
             rx.badge("LIVE", color_scheme="red", variant="solid", border_radius="2px", font_size="9px", padding="2px 4px"),
-            rx.text("FactSet StreetAccount Media", font_size="10px", font_weight="bold", color="#666"),
+            rx.text("Factchecker StreetAccount Media", font_size="10px", font_weight="bold", color="#666"),
             rx.spacer(),
             rx.icon("more-horizontal", size=14, color="#888"),
             margin_bottom="8px", align_items="center", width="100%"

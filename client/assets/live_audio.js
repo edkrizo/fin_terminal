@@ -1,9 +1,9 @@
-window.mercuryAudioContext = null;
-window.mercuryMicStream = null;
-window.mercuryWebSocket = null;
-window.mercuryNextPlayTime = 0;
-window.mercuryLastSpeechTime = Date.now();
-window.mercuryIdlePingInterval = null;
+window.copilotAudioContext = null;
+window.copilotMicStream = null;
+window.copilotWebSocket = null;
+window.copilotNextPlayTime = 0;
+window.copilotLastSpeechTime = Date.now();
+window.copilotIdlePingInterval = null;
 
 /**
  * Initializes the WebRTC and WebSocket engine for Gemini Multimodal Live.
@@ -18,29 +18,29 @@ window.mercuryIdlePingInterval = null;
  * @param {string} persona - Explicit persona profile (e.g. Fundamental Analyst)
  * @param {string} dashboardContext - Escaped JSON string of the active UI tables/news
  */
-window.startMercuryLive = async function(persona, dashboardContext) {
+window.startCopilotLive = async function(persona, dashboardContext) {
     console.log(`🎙️ Requesting microphone access for Persona: ${persona}...`);
     
     try {
         // 1. Get Microphone Permissions
-        window.mercuryMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        window.copilotMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
         // 2. Set up Audio Context (Gemini strictly requires 16kHz)
-        window.mercuryAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-        window.mercuryNextPlayTime = window.mercuryAudioContext.currentTime;
+        window.copilotAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        window.copilotNextPlayTime = window.copilotAudioContext.currentTime;
         
         // 3. Open WebSocket
         // 🚀 THE FIX 2: Pass the active persona as a query parameter to FastAPI
         const safePersona = encodeURIComponent(persona || "Fundamental Analyst");
-        window.mercuryWebSocket = new WebSocket(`ws://127.0.0.1:8080/ws/live?persona=${safePersona}`);
-        window.mercuryWebSocket.binaryType = 'arraybuffer'; 
+        window.copilotWebSocket = new WebSocket(`ws://127.0.0.1:8080/ws/live?persona=${safePersona}`);
+        window.copilotWebSocket.binaryType = 'arraybuffer'; 
 
         // 🚀 THE FIX 3: Inject the Dashboard State immediately upon connection!
-        window.mercuryWebSocket.onopen = () => {
+        window.copilotWebSocket.onopen = () => {
             console.log("✅ Live Voice channel established. Injecting dashboard context...");
             if (dashboardContext) {
                 // Send the JSON string to the server so it can be pushed into Gemini's memory
-                window.mercuryWebSocket.send(dashboardContext);
+                window.copilotWebSocket.send(dashboardContext);
             }
             
             // ⏸️ Pause the podcast explicitly if it was playing since they are interrupting it
@@ -51,40 +51,40 @@ window.startMercuryLive = async function(persona, dashboardContext) {
             }
             
             // --- IDLE STATUS PINGER ---
-            if (window.mercuryIdlePingInterval) clearInterval(window.mercuryIdlePingInterval);
-            window.mercuryLastSpeechTime = Date.now();
-            window.mercuryIdlePingInterval = setInterval(() => {
-                if (!window.mercuryWebSocket || window.mercuryWebSocket.readyState !== WebSocket.OPEN) return;
+            if (window.copilotIdlePingInterval) clearInterval(window.copilotIdlePingInterval);
+            window.copilotLastSpeechTime = Date.now();
+            window.copilotIdlePingInterval = setInterval(() => {
+                if (!window.copilotWebSocket || window.copilotWebSocket.readyState !== WebSocket.OPEN) return;
                 
                 // Do not ping if the AI is actively speaking
-                if (window.mercuryNextPlayTime > window.mercuryAudioContext.currentTime) return;
+                if (window.copilotNextPlayTime > window.copilotAudioContext.currentTime) return;
                 
                 const now = Date.now();
-                const silentSeconds = (now - window.mercuryLastSpeechTime) / 1000;
+                const silentSeconds = (now - window.copilotLastSpeechTime) / 1000;
                 
                 // If the user has been silent for 10 seconds, send an async status ping
                 if (silentSeconds > 10) {
                     const pingPayload = JSON.stringify({
                          "action": "idle_ping"
                     });
-                    window.mercuryWebSocket.send(pingPayload);
-                    window.mercuryLastSpeechTime = now; // reset timer to prevent spamming
+                    window.copilotWebSocket.send(pingPayload);
+                    window.copilotLastSpeechTime = now; // reset timer to prevent spamming
                 }
             }, 5000);
         };
 
         // 4. Capture and Resample Mic Audio
-        const source = window.mercuryAudioContext.createMediaStreamSource(window.mercuryMicStream);
-        const processor = window.mercuryAudioContext.createScriptProcessor(1024, 1, 1);
+        const source = window.copilotAudioContext.createMediaStreamSource(window.copilotMicStream);
+        const processor = window.copilotAudioContext.createScriptProcessor(1024, 1, 1);
         
         source.connect(processor);
-        processor.connect(window.mercuryAudioContext.destination);
+        processor.connect(window.copilotAudioContext.destination);
         
         processor.onaudioprocess = (e) => {
-            if (window.mercuryWebSocket && window.mercuryWebSocket.readyState === WebSocket.OPEN) {
+            if (window.copilotWebSocket && window.copilotWebSocket.readyState === WebSocket.OPEN) {
                 
                 // --- MICROPHONE AUTO-ECHO MUTE: Skip sending frames if Bot is actively speaking ---
-                const isBotSpeaking = window.mercuryNextPlayTime > window.mercuryAudioContext.currentTime + 0.1; 
+                const isBotSpeaking = window.copilotNextPlayTime > window.copilotAudioContext.currentTime + 0.1; 
                 if (isBotSpeaking) {
                     return;
                 }
@@ -103,15 +103,15 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                 }
                 
                 if (isSpeaking) {
-                    window.mercuryLastSpeechTime = Date.now();
+                    window.copilotLastSpeechTime = Date.now();
                 }
                 
-                window.mercuryWebSocket.send(pcm16.buffer);
+                window.copilotWebSocket.send(pcm16.buffer);
             }
         };
 
         // 5. Receive Voice or Commands from Server
-        window.mercuryWebSocket.onmessage = async (event) => {
+        window.copilotWebSocket.onmessage = async (event) => {
             
             // CHECK 1: Did the server send a TEXT command to close the mic?
             if (typeof event.data === "string") {
@@ -140,7 +140,7 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                     return;
                 } else if (event.data === "INTERRUPT") {
                     console.log("⚠️ Interrupted! Clearing audio queue...");
-                    window.mercuryNextPlayTime = window.mercuryAudioContext.currentTime;
+                    window.copilotNextPlayTime = window.copilotAudioContext.currentTime;
                     return;
                 }
                 
@@ -195,19 +195,19 @@ window.startMercuryLive = async function(persona, dashboardContext) {
                     float32[i] = pcm16[i] / 32768.0; 
                 }
                 
-                const audioBuffer = window.mercuryAudioContext.createBuffer(1, float32.length, 24000);
+                const audioBuffer = window.copilotAudioContext.createBuffer(1, float32.length, 24000);
                 audioBuffer.getChannelData(0).set(float32);
                 
-                const playSource = window.mercuryAudioContext.createBufferSource();
+                const playSource = window.copilotAudioContext.createBufferSource();
                 playSource.buffer = audioBuffer;
-                playSource.connect(window.mercuryAudioContext.destination);
+                playSource.connect(window.copilotAudioContext.destination);
                 
-                if (window.mercuryNextPlayTime < window.mercuryAudioContext.currentTime) {
-                    window.mercuryNextPlayTime = window.mercuryAudioContext.currentTime;
+                if (window.copilotNextPlayTime < window.copilotAudioContext.currentTime) {
+                    window.copilotNextPlayTime = window.copilotAudioContext.currentTime;
                 }
                 
-                playSource.start(window.mercuryNextPlayTime);
-                window.mercuryNextPlayTime = window.mercuryNextPlayTime + audioBuffer.duration;
+                playSource.start(window.copilotNextPlayTime);
+                window.copilotNextPlayTime = window.copilotNextPlayTime + audioBuffer.duration;
             }
         };
 
@@ -216,22 +216,22 @@ window.startMercuryLive = async function(persona, dashboardContext) {
     }
 };
 
-window.stopMercuryLive = function() {
+window.stopCopilotLive = function() {
     console.log("🔇 Stopping Live Voice...");
-    if (window.mercuryWebSocket) {
+    if (window.copilotWebSocket) {
         // Send a final close signal to the server so it cleanly kills the session
-        if (window.mercuryWebSocket.readyState === WebSocket.OPEN) {
-            window.mercuryWebSocket.send("CLOSE_MIC");
+        if (window.copilotWebSocket.readyState === WebSocket.OPEN) {
+            window.copilotWebSocket.send("CLOSE_MIC");
         }
-        window.mercuryWebSocket.close();
-        window.mercuryWebSocket = null;
+        window.copilotWebSocket.close();
+        window.copilotWebSocket = null;
     }
-    if (window.mercuryMicStream) {
-        window.mercuryMicStream.getTracks().forEach(track => track.stop());
-        window.mercuryMicStream = null;
+    if (window.copilotMicStream) {
+        window.copilotMicStream.getTracks().forEach(track => track.stop());
+        window.copilotMicStream = null;
     }
-    if (window.mercuryAudioContext) {
-        window.mercuryAudioContext.close();
-        window.mercuryAudioContext = null;
+    if (window.copilotAudioContext) {
+        window.copilotAudioContext.close();
+        window.copilotAudioContext = null;
     }
 };

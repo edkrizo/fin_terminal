@@ -25,7 +25,7 @@ os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 import vertexai
 vertexai.init(project="facset-playground", location="global") 
 
-# 🚀 2. LOCAL DEV MOCK: Intercept FactSet SDK
+# 🚀 2. LOCAL DEV MOCK: Intercept Factchecker SDK
 from fds.sdk.utils.authentication.confidential import ConfidentialClient
 original_init = ConfidentialClient.__init__
 
@@ -33,13 +33,13 @@ def local_patched_init(self, *args, **kwargs):
     if 'config_path' not in kwargs and 'config' not in kwargs:
         local_path = os.path.join(os.getcwd(), "shared_conf", "config.json")
         kwargs['config_path'] = local_path
-        print(f"🔧 [LOCAL DEV] Intercepted FactSet Auth. Routing to: {local_path}", flush=True)
+        print(f"🔧 [LOCAL DEV] Intercepted Factchecker Auth. Routing to: {local_path}", flush=True)
     original_init(self, *args, **kwargs)
 
 ConfidentialClient.__init__ = local_patched_init
 
 # 🚀 3. IMPORT YOUR EXACT PRODUCTION AGENTS & PROMPTS
-from agent.core.agent_router import MercuryTerminalBackend
+from agent.core.agent_router import CopilotTerminalBackend
 from agent.core.prompts import get_live_system_nudge
 from google.adk import Runner
 from google.adk.memory import InMemoryMemoryService 
@@ -52,18 +52,18 @@ assets_dir_init = os.path.join(os.getcwd(), "client", "assets")
 os.makedirs(assets_dir_init, exist_ok=True)
 app.mount("/assets", StaticFiles(directory=assets_dir_init), name="assets")
 
-print("⚙️ Initializing Local Mercury Backend...", flush=True)
-backend = MercuryTerminalBackend()
+print("⚙️ Initializing Local Copilot Backend...", flush=True)
+backend = CopilotTerminalBackend()
 backend.set_up()
 
 session_svc = InMemorySessionService()
 memory_svc = InMemoryMemoryService() 
 artifact_svc = InMemoryArtifactService()
 
-quant_runner = Runner(app_name="Mercury_Quant", agent=backend.quant_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
-news_runner = Runner(app_name="Mercury_News", agent=backend.news_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
-video_runner = Runner(app_name="Mercury_Video", agent=backend.video_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
-synth_runner = Runner(app_name="Mercury_Synth", agent=backend.synth_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
+quant_runner = Runner(app_name="Copilot_Quant", agent=backend.quant_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
+news_runner = Runner(app_name="Copilot_News", agent=backend.news_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
+video_runner = Runner(app_name="Copilot_Video", agent=backend.video_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
+synth_runner = Runner(app_name="Copilot_Synth", agent=backend.synth_agent, artifact_service=artifact_svc, session_service=session_svc, memory_service=memory_svc)
 
 class QueryPayload(BaseModel):
     input: dict
@@ -83,7 +83,7 @@ async def run_single(runner: Runner, query: str, app_name: str, timeout: float =
     
     yt_match = re.search(r'(https://www\.youtube\.com/watch\?v=[a-zA-Z0-9_-]{11})', query)
     
-    if yt_match and app_name == "Mercury_Video":
+    if yt_match and app_name == "Copilot_Video":
         parts.append(types.Part(file_data=types.FileData(file_uri=yt_match.group(1), mime_type="video/mp4")))
     
     content = types.Content(role="user", parts=parts)
@@ -104,7 +104,7 @@ async def run_single(runner: Runner, query: str, app_name: str, timeout: float =
         response_text = f"[{app_name} DATA UNAVAILABLE - TIMEOUT]"
     except Exception as e:
         error_msg = str(e)
-        if ("403" in error_msg or "PERMISSION_DENIED" in error_msg) and app_name == "Mercury_Video":
+        if ("403" in error_msg or "PERMISSION_DENIED" in error_msg) and app_name == "Copilot_Video":
             print(f"⚠️ [LIVE STREAM DETECTED] {app_name} cannot watch natively. Forcing Web Pivot...", flush=True)
             
             fallback_prompt = (
@@ -138,7 +138,7 @@ async def background_mcp_updater():
             for cache_key, agent_query in list(ACTIVE_QUERIES.items()):
                 try:
                     # Execute Quant runner silently in the background
-                    quant_data = await run_single(quant_runner, agent_query, "Mercury_Quant", timeout=60.0)
+                    quant_data = await run_single(quant_runner, agent_query, "Copilot_Quant", timeout=60.0)
                     MCP_CACHE[cache_key] = quant_data
                 except Exception as e:
                     print(f"⚠️ [BACKGROUND ERROR] Failed to update MCP cache: {e}", flush=True)
@@ -168,7 +168,7 @@ async def mock_vertex_endpoint(payload: QueryPayload):
     
     if "[EXTRACT_VIDEO]" in user_query or "[VIDEO_QA]" in user_query:
         print(f"🎬 [LAZY LOAD] User triggered explicit video extraction. Routing heavy compute to Video Agent...", flush=True)
-        video_analysis = await run_single(video_runner, user_query, "Mercury_Video", timeout=120.0)
+        video_analysis = await run_single(video_runner, user_query, "Copilot_Video", timeout=120.0)
         t1 = time.time()
         print(f"✅ Video Extraction Complete! Took {t1 - t0:.2f} seconds.", flush=True)
         
@@ -209,17 +209,17 @@ async def mock_vertex_endpoint(payload: QueryPayload):
         
         # --- LIVE MCP EXECUTION (NO CACHING FOR REAL-TIME PRICING) ---
         print(f"🔄 Fetching MCP live market data...", flush=True)
-        quant_task = run_single(quant_runner, agent_query, "Mercury_Quant", timeout=60.0)
+        quant_task = run_single(quant_runner, agent_query, "Copilot_Quant", timeout=60.0)
             
         if tab_context == "Today's Top News":
-            news_task = run_single(news_runner, agent_query, "Mercury_News", timeout=60.0)
-            video_task = run_single(video_runner, f"For today's global macro news: {alpha_prompt}", "Mercury_Video", timeout=60.0)
+            news_task = run_single(news_runner, agent_query, "Copilot_News", timeout=60.0)
+            video_task = run_single(video_runner, f"For today's global macro news: {alpha_prompt}", "Copilot_Video", timeout=60.0)
         elif tab_context == "Company/Security":
-            news_task = run_single(news_runner, f"[Current Date: {current_date}] [Active Persona: {persona}] Single stock news for: {user_query}", "Mercury_News", timeout=60.0)
-            video_task = run_single(video_runner, f"Analyzing {user_query}: {alpha_prompt}", "Mercury_Video", timeout=60.0)
+            news_task = run_single(news_runner, f"[Current Date: {current_date}] [Active Persona: {persona}] Single stock news for: {user_query}", "Copilot_News", timeout=60.0)
+            video_task = run_single(video_runner, f"Analyzing {user_query}: {alpha_prompt}", "Copilot_Video", timeout=60.0)
         else:
-            news_task = run_single(news_runner, agent_query, "Mercury_News", timeout=60.0)
-            video_task = run_single(video_runner, f"Regarding {user_query}: {alpha_prompt}", "Mercury_Video", timeout=60.0)
+            news_task = run_single(news_runner, agent_query, "Copilot_News", timeout=60.0)
+            video_task = run_single(video_runner, f"Regarding {user_query}: {alpha_prompt}", "Copilot_Video", timeout=60.0)
 
         quant_task = quant_task or dummy_agent("QUANT")
         news_task = news_task or dummy_agent("NEWS")
@@ -230,8 +230,8 @@ async def mock_vertex_endpoint(payload: QueryPayload):
         news_data = gathered_results[1]
         video_data = gathered_results[2]
     else:
-        quant_data = await run_single(quant_runner, agent_query, "Mercury_Quant", timeout=60.0)
-        news_data = await run_single(news_runner, agent_query, "Mercury_News", timeout=60.0)
+        quant_data = await run_single(quant_runner, agent_query, "Copilot_Quant", timeout=60.0)
+        news_data = await run_single(news_runner, agent_query, "Copilot_News", timeout=60.0)
         video_data = await dummy_agent("VIDEO")
         
     t1 = time.time()
@@ -246,7 +246,7 @@ async def mock_vertex_endpoint(payload: QueryPayload):
     UI Dashboard Tab: {tab_context}
     User Query: {user_query}
 
-    FactSet Quant Data: {quant_data}
+    Factchecker Quant Data: {quant_data}
     Live Macro News Data: {news_data}
     Media/Grounding Data: {video_data}
 
@@ -265,13 +265,13 @@ async def mock_vertex_endpoint(payload: QueryPayload):
     }}
     """
     
-    final_json = await run_single(synth_runner, synth_instruction, "Mercury_Synth", timeout=60.0)
+    final_json = await run_single(synth_runner, synth_instruction, "Copilot_Synth", timeout=60.0)
     t5 = time.time()
     print(f"✅ Synthesizer Done. Took {t5 - t4:.2f} seconds.", flush=True)
     
-    if "[Mercury_Synth" in final_json or "ERROR" in final_json:
+    if "[Copilot_Synth" in final_json or "ERROR" in final_json:
         return {"output": {
-            "insights": "<i>Synthesis timeout. The FactSet and multimodal data took too long to process. Please try your query again.</i>",
+            "insights": "<i>Synthesis timeout. The Factchecker and multimodal data took too long to process. Please try your query again.</i>",
             "suggested_follow_ups": ["Retry query"]
         }}
 
@@ -285,7 +285,7 @@ async def mock_vertex_endpoint(payload: QueryPayload):
     except json.JSONDecodeError as e:
         print(f"\n❌ CRITICAL JSON PARSE ERROR: {e}", flush=True)
         return {"output": {
-            "insights": "<i>Data synthesis error. FactSet returned complex data that could not be parsed into the UI.</i>",
+            "insights": "<i>Data synthesis error. Factchecker returned complex data that could not be parsed into the UI.</i>",
             "suggested_follow_ups": ["Retry query"]
         }}
 
@@ -370,7 +370,7 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                         f"The user JUST clicked 'Interrupt & Discuss Live'. YOU MUST IMMEDIATELY acknowledge they interrupted you on air, welcome them with an energetic tone, and ask them what is on their mind back!"
                                     )
                                     
-                                print("📊 [GEMINI LIVE] Injected live dashboard & podcast context into Mercury's memory.", flush=True)
+                                print("📊 [GEMINI LIVE] Injected live dashboard & podcast context into Copilot's memory.", flush=True)
                                 await session.send(input=injection_prompt)
                             else:
                                 print("🔇 [FRONTEND] Server received CLOSE_MIC command.", flush=True)
@@ -419,7 +419,7 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                                         "security_ticker": ticker
                                                     }))
                                                     result_text = "View switched successfully."
-                                                elif fn_name == "query_factset_quant":
+                                                elif fn_name == "query_factchecker_quant":
                                                     try:
                                                         quant_data = await asyncio.wait_for(backend.quant_agent.run(target_query), timeout=30.0)
                                                         result_text = quant_data

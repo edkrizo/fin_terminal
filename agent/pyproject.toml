@@ -1,7 +1,7 @@
 [project]
-name = "mercury-agent" 
+name = "copilot-agent" 
 version = "0.1.0"
-description = "FactSet terminal backend on A2A Agent Engine"
+description = "Factchecker terminal backend on A2A Agent Engine"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     # GCP Infrastructure & ADK
@@ -19,7 +19,7 @@ dependencies = [
     "nest_asyncio>=1.6.0",
     "pydantic",
     "python-dotenv",
-    # FactSet & MCP SDKs
+    # Factchecker & MCP SDKs
     "fds.sdk.utils>=2.1.0",
     "mcp>=1.0.0",
 ]

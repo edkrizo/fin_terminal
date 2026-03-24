@@ -8,8 +8,7 @@ import plotly.graph_objects as go
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-# 🚀 IMPORT: The decoupled static configuration
-from mercury_client.core.config import PERSONA_MENUS
+
 
 load_dotenv()
 AGENT_URL = os.environ.get("AGENT_URL", "http://127.0.0.1:8080/query")
@@ -55,7 +54,7 @@ class AppState(rx.State):
         "latest_news": ["Fetching live institutional feeds..."],
         "video_ids": [],
         "catalyst_alerts": [
-            {"title": "Connecting to FactSet", "time": "Live", "body": "Retrieving overnight catalysts for your coverage universe..."}
+            {"title": "Connecting to Factchecker", "time": "Live", "body": "Retrieving overnight catalysts for your coverage universe..."}
         ],
         "leaderboard": [],
         "upcoming_catalysts": [
@@ -73,10 +72,7 @@ class AppState(rx.State):
     # 🎙️ Podcast Memory Context (Discuss Live triggers)
     current_podcast_script: str = ""
 
-    @rx.var
-    def sidebar_menu(self) -> List[Dict[str, Any]]:
-        """Dynamically generates the left sidebar navigation based on the active persona."""
-        return PERSONA_MENUS.get(self.current_persona, PERSONA_MENUS["Fundamental Analyst"])
+
 
     @rx.var
     def pulse_color(self) -> str:
@@ -106,10 +102,10 @@ class AppState(rx.State):
             escaped_context = json.dumps(context_snapshot).replace('\\', '\\\\').replace('`', '\\`')
             print("🔊 [FRONTEND] Pausing background audio player and opening WebSocket...", flush=True)
             yield rx.call_script("const a = document.querySelector('audio'); if(a) a.pause();")
-            yield rx.call_script(f"window.startMercuryLive('{self.current_persona}', `{escaped_context}`)")
+            yield rx.call_script(f"window.startCopilotLive('{self.current_persona}', `{escaped_context}`)")
         else:
             print("🔇 [FRONTEND] Live Voice Mode Deactivated! Closing WebSocket...", flush=True)
-            yield rx.call_script("window.stopMercuryLive()")
+            yield rx.call_script("window.stopCopilotLive()")
             yield rx.call_script("const a = document.querySelector('audio'); if(a) a.play();")
 
     def toggle_podcast_live(self):
@@ -129,10 +125,10 @@ class AppState(rx.State):
             escaped_context = json.dumps(context_snapshot).replace('\\', '\\\\').replace('`', '\\`')
             print("🔊 [FRONTEND] Pausing background audio player and opening WebSocket...", flush=True)
             yield rx.call_script("const a = document.querySelector('audio'); if(a) a.pause();")
-            yield rx.call_script(f"window.startMercuryLive('{self.current_persona}', `{escaped_context}`)")
+            yield rx.call_script(f"window.startCopilotLive('{self.current_persona}', `{escaped_context}`)")
         else:
             print("🔇 [FRONTEND] Podcast Live Interrupt Deactivated! Closing WebSocket...", flush=True)
-            yield rx.call_script("window.stopMercuryLive()")
+            yield rx.call_script("window.stopCopilotLive()")
             yield rx.call_script("const a = document.querySelector('audio'); if(a) a.play();")
 
     def initialize_dashboard(self):
@@ -140,9 +136,9 @@ class AppState(rx.State):
         if self.has_initialized:
             return
         self.has_initialized = True
-        return self.startMercuryLive()
+        return self.startCopilotLive()
 
-    def startMercuryLive(self):
+    def startCopilotLive(self):
         """Trigger agentic query pipeline for full canvas load setups triggers"""
         self.current_audio_url = ""
         self.current_podcast_script = ""

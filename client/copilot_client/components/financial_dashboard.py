@@ -1,11 +1,11 @@
 import reflex as rx
-from mercury_client.core.state import AppState
+from copilot_client.core.state import AppState
 # 🚀 IMPORTED the new document_upload_workspace
-from mercury_client.components.shared import workspace_header, kpi_block, live_news_flash, daily_audio_brief_player, document_upload_workspace
+from copilot_client.components.shared import workspace_header, kpi_block, live_news_flash, daily_audio_brief_player, document_upload_workspace
 
 def peer_valuation_card(title: str, time: str, body: str) -> rx.Component:
     return rx.box(
-        rx.hstack(rx.text("FactSet Signal", font_size="10px", font_weight="bold", color="#005A9C"), rx.spacer(), rx.text(time, font_size="10px", color="#888")),
+        rx.hstack(rx.text("Platform Signal", font_size="10px", font_weight="bold", color="#005A9C"), rx.spacer(), rx.text(time, font_size="10px", color="#888")),
         rx.text(title, font_size="12px", font_weight="bold", color="#005A9C", margin_y="6px", line_height="1.3"),
         rx.text(body, font_size="11px", color="#444", line_height="1.4"),
         padding="15px", border_right="1px solid #D9E1E8", flex="1"
@@ -20,7 +20,7 @@ def compact_video_card(video_id: str) -> rx.Component:
 
 def render_dynamic_alert_card(alert: dict) -> rx.Component:
     return rx.box(
-        rx.hstack(rx.text("FactSet Signal", font_size="10px", font_weight="bold", color="#005A9C"), rx.spacer(), rx.text(alert["time"], font_size="10px", color="#888")),
+        rx.hstack(rx.text("Platform Signal", font_size="10px", font_weight="bold", color="#005A9C"), rx.spacer(), rx.text(alert["time"], font_size="10px", color="#888")),
         rx.text(alert["title"], font_size="12px", font_weight="bold", color="#005A9C", margin_y="6px", line_height="1.3"),
         rx.html(alert["body"], font_size="11px", color="#444", line_height="1.4"),
         padding="15px", border_right="1px solid #D9E1E8", flex="1"
@@ -43,6 +43,13 @@ def render_fundamental_morning_briefing() -> rx.Component:
                 width="100%", align_items="stretch", spacing="0"
             ),
             bg="#FFF", border_bottom="1px solid #D9E1E8", width="100%", margin_bottom="20px"
+        ),
+
+        # 🚀 HERO WIDGETS: PODCAST GENERATION & DOC UPLOAD MOVED TO THE TOP
+        rx.hstack(
+            rx.box(daily_audio_brief_player(), width="45%", box_shadow="0px 2px 4px rgba(0,0,0,0.05)", border_radius="6px", overflow="hidden"),
+            rx.box(document_upload_workspace(), width="55%", box_shadow="0px 2px 4px rgba(0,0,0,0.05)", border_radius="6px", overflow="hidden"),
+            width="100%", spacing="4", margin_bottom="20px", align_items="stretch"
         ),
 
         # 🚀 4-QUADRANT MASTER CANVAS 
@@ -81,16 +88,10 @@ def render_fundamental_morning_briefing() -> rx.Component:
         # 🚀 3. BOTTOM UTILITY CONTAINER (Broadcasts & Doc Tools)
         rx.cond(AppState.main_page_videos.length() > 0, rx.box(rx.text("Institutional Broadcasts", font_size="13px", font_weight="bold", color="#111", margin_bottom="15px"), rx.hstack(rx.foreach(AppState.main_page_videos, compact_video_card), width="100%", spacing="4", align_items="start", overflow_x="hidden"), padding="20px 15px", width="100%", bg="#FFF", border_top="1px solid #D9E1E8", margin_top="20px"), rx.box()),
         
-        rx.hstack(
-            rx.box(daily_audio_brief_player(), width="45%"),
-            rx.box(document_upload_workspace(), width="55%"),
-            width="100%", spacing="4", padding_top="20px", align_items="start"
-        ),
-        
         width="100%", spacing="0", overflow="hidden"
     )
 
-def factset_security_header() -> rx.Component:
+def platform_security_header() -> rx.Component:
     d = AppState.fund_data
     return rx.hstack(
         rx.hstack(
@@ -147,9 +148,9 @@ def factset_security_header() -> rx.Component:
 def render_fundamental_deep_dive() -> rx.Component:
     d = AppState.fund_data
     return rx.vstack(
-        factset_security_header(),
+        platform_security_header(),
         rx.box(
-            rx.hstack(rx.icon("sparkles", size=14, color="#005A9C"), rx.text("Mercury Agent Insights →", font_size="12px", font_weight="bold", color="#333"), margin_bottom="5px", padding_left="15px", padding_top="15px"),
+            rx.hstack(rx.icon("sparkles", size=14, color="#005A9C"), rx.text("Copilot Agent Insights →", font_size="12px", font_weight="bold", color="#333"), margin_bottom="5px", padding_left="15px", padding_top="15px"),
             rx.hstack(
                 peer_valuation_card("Deep Dive Initialization", "1m ago", f"Agent has ingested filings and transcripts for {AppState.current_security} overview."),
                 peer_valuation_card("Margin Analysis", "1m ago", f"Reviewing margin structure analysis tailored for primary security lookup benchmarks."),
@@ -157,8 +158,16 @@ def render_fundamental_deep_dive() -> rx.Component:
                 rx.box(rx.text("Suggested Follow Ups →", font_size="11px", font_weight="bold", color="#666", margin_bottom="8px"), rx.vstack(rx.text("10-K Insights >", font_size="10px", color="#005A9C"), rx.text("Annual KPI Tracking >", font_size="10px", color="#005A9C"), spacing="2"), padding="15px", flex="0.7"),
                 width="100%", align_items="stretch", spacing="0"
             ),
-            bg="#FFF", border_bottom="1px solid #D9E1E8", width="100%"
+            bg="#FFF", border_bottom="1px solid #D9E1E8", width="100%", margin_bottom="20px"
         ),
+        
+        # 🚀 HERO WIDGETS: PODCAST GENERATION & DOC UPLOAD MOVED TO THE TOP
+        rx.hstack(
+            rx.box(daily_audio_brief_player(), width="45%", box_shadow="0px 2px 4px rgba(0,0,0,0.05)", border_radius="6px", overflow="hidden"),
+            rx.box(document_upload_workspace(), width="55%", box_shadow="0px 2px 4px rgba(0,0,0,0.05)", border_radius="6px", overflow="hidden"),
+            width="100%", spacing="4", margin_bottom="20px", align_items="stretch"
+        ),
+        
         rx.hstack(
             rx.vstack(
                 rx.box(
@@ -194,8 +203,6 @@ def render_fundamental_deep_dive() -> rx.Component:
                 ),
                 rx.box(rx.text("Enterprise Value Bridge", font_size="13px", font_weight="bold", color="#111", margin_bottom="10px"), rx.text("Data loading...", font_size="10px", color="#888", font_style="italic"), padding="15px", width="100%", bg="#FFF", border_bottom="1px solid #D9E1E8"),
                 live_news_flash(),
-                daily_audio_brief_player(),
-                document_upload_workspace(),
                 width="35%", spacing="0", align_items="stretch"
             ),
             width="100%", spacing="0", align_items="stretch"
@@ -203,8 +210,8 @@ def render_fundamental_deep_dive() -> rx.Component:
         width="100%", spacing="0", border_radius="4px", box_shadow="0 1px 3px rgba(0,0,0,0.05)", overflow="hidden"
     )
 
-def render_fundamental_view() -> rx.Component:
-    """The sub-router for the Fundamental Persona"""
+def render_main_workspace() -> rx.Component:
+    """The master router for the main workspace area"""
     return rx.cond(
         AppState.current_security == "", 
         render_fundamental_morning_briefing(), 
