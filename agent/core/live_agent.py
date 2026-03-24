@@ -1,3 +1,11 @@
+"""
+Gemini Multimodal Live Voice Agent Router.
+
+This module provisions an interactive WebRTC-style WebSocket connection between
+the user's browser frontend and the Vertex AI Gemini Multimodal Live API. It
+enables seamless live voice interruptions and tracks active frontend context.
+"""
+
 import os
 import json
 import asyncio
@@ -6,24 +14,26 @@ from google import genai
 from google.genai import types
 from agent.core.prompts import get_live_system_nudge
 
+# ==========================================
 # 🎙️ INIT ROUTER FOR LIVE VOICE
-live_router = APIRouter()
+# ==========================================
+live_router = APIRouter(tags=["Live Voice Interface"])
 
-# 🚀 Live Voice Session Factory
+# ---------------------------------------------------------
+# Live Voice Session Factory
+# ---------------------------------------------------------
 def get_live_voice_session():
     """
-    Initializes an active Vertex AI WebRTC connection to the Gemini Multimodal Live API.
+    Initializes an active Vertex AI connection to the Gemini Multimodal Live API.
     
-    This factory strictly defines the JSON schema for 3 active Voice Tools that the 
-    Gemini model can trigger asynchronously during the user's speech session:
+    This factory explicitly registers 2 operational voice tools that the 
+    Gemini model can autonomously trigger during a live conversation:
       1. end_conversation: Elegantly closes the mic buffer when the user implies they are done.
-      2. analyze_all_sources_for_alpha: Routes the user's broad request to the Frontend router.
-      3. analyze_specific_video: Asks the dedicated Video Agent a specific contextual question.
-      4. switch_view: Navigates the active GUI canvas based on verbal user input.
+      2. switch_view: Navigates the active GUI canvas based on verbal user input.
     """
     client = genai.Client(
         vertexai=True,
-        project="facset-playground",
+        project=os.environ.get("GOOGLE_CLOUD_PROJECT", "YOUR_GCP_PROJECT_ID"),
         location="us-central1"
     ) 
     
@@ -67,35 +77,37 @@ def get_live_voice_session():
     
     return client.aio.live.connect(model=model_id, config=config)
 
-# 🎙️ GEMINI LIVE WEBSOCKET ROUTE (CONTINUOUS CONVERSATION)
+# ---------------------------------------------------------
+# WebRTC / WebSocket Handlers
+# ---------------------------------------------------------
 @live_router.websocket("/ws/live")
 async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamental Analyst"):
     """
     The master bidirectional proxy connecting the user's browser WebAudio engine 
     with the Gemini Multimodal Live API.
     
-    This function handles:
+    Execution loop:
       1. Connection: Accepting and routing websocket metadata payload to prime Gemini.
-      2. Async Input Stream: Pushing raw 16kHz PCM audio arrays straight into Vertex buffers.
-      3. Function Hooks: Native interception of Gemini function calls and routing 
-         the output back to the UI in less than a second.
+      2. Async Input Stream: Pushing raw 16kHz PCM audio arrays directly into Vertex buffers.
+      3. Function Hooks: Native interception of Gemini function calls to trigger Reflex UI state changes.
     """
     await websocket.accept()
     print(f"\n🎙️ [WEBSOCKET] Client connected for Persona: {persona}", flush=True)
     
     try:
-        # 🚀 BRIDGE: Access the global orchestrator backend attached to FastAPI state!
+        # Access the global orchestrator backend attached to FastAPI state
         backend = websocket.app.state.backend
         
         async with get_live_voice_session() as session:
             print("✅ [GEMINI LIVE] Connected to Vertex AI Multimodal Live API.", flush=True)
             
             async def receive_from_browser():
+                """Asynchronously reads audio buffers and text signals from the browser."""
                 try:
                     while True:
                         message = await websocket.receive()
                         
-                        # 🚀 THE FIX: Prevent 'Cannot call receive once disconnected' crash
+                        # Prevent 'Cannot call receive once disconnected' crash
                         if message.get("type") == "websocket.disconnect":
                             print("🔇 [FRONTEND] Client elegantly terminated the WebSocket.", flush=True)
                             await session.send(input="SYSTEM UPDATE: The user explicitly closed the microphone. Call end_conversation.", end_of_turn=True)
@@ -115,12 +127,13 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                 except:
                                     pass
                                     
-                                # ⏱️ IDLE PING INTERCEPT
+                                # Intercept browser heartbeat pings
                                 if parsed_context.get("action") == "idle_ping":
                                     print("⏱️ [GEMINI LIVE] Received browser idle ping! Injecting check-in prompt...", flush=True)
                                     await session.send(input="SYSTEM UPDATE: The user has been silent for 10 seconds. Briefly and warmly ask out loud if they have any more questions, or give them a quick update if you are still waiting for data. Keep it to 1 concise, helpful sentence.", end_of_turn=True)
                                     continue
                                     
+                                # Context injection prompt logic
                                 injection_prompt = (
                                     f"SYSTEM UPDATE: The user just clicked the Live Voice button. "
                                     f"YOUR VERY FIRST SENTENCE MUST BE AN OUT-LOUD GREETING, DO NOT WAIT FOR THEM TO SPEAK! "
@@ -140,14 +153,14 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                 print("📊 [GEMINI LIVE] Injected context.", flush=True)
                                 await session.send(input=injection_prompt, end_of_turn=True)
                             else:
-                                print("🔇 [FRONTEND] Server received CLOSE_MIC command.", flush=True)
-                                
+                                print("🔇 [FRONTEND] Server received CLOSE_MIC command.", flush=True)   
                 except WebSocketDisconnect:
                     print("🔇 [FRONTEND] User explicitly closed the microphone connection via UI.", flush=True)
                 except Exception as e:
                     print(f"⚠️ [FRONTEND] Mic stream error: {e}", flush=True)
 
             async def receive_from_gemini():
+                """Asynchronously reads audio chunks and function call requests from Gemini."""
                 try:
                     while True: 
                         async for response in session.receive():
@@ -161,9 +174,10 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                 if model_turn is not None:
                                     for part in model_turn.parts:
                                         if part.inline_data and part.inline_data.data:
+                                            # Send synthesized audio binary directly to frontend player
                                             await websocket.send_bytes(part.inline_data.data)
 
-                            # 🚀 THE FIX: Intercept decoupled 'tool_call' arrays dynamically via the Google GenAI SDK
+                            # Intercept decoupled 'tool_call' arrays dynamically
                             tool_call = getattr(response, "tool_call", None)
                             
                             # Support legacy nested format just in case
@@ -182,7 +196,6 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                     print(f"\n⚙️ [GEMINI LIVE] Voice model requested agent: {fn_name} | Args: {args}", flush=True)
                                     
                                     result_text = ""
-                                    target_query = args.get("query", "General financial update")
                                     
                                     try:
                                         if fn_name == "end_conversation":
@@ -203,6 +216,7 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
                                     except Exception as rx_err:
                                          result_text = f"ERROR: {rx_err}"
                                          
+                                    # Reply to the models function call natively allowing it to speak the result
                                     await session.send(
                                         input=[types.Part.from_function_response(
                                             name=fn_name,
@@ -220,6 +234,7 @@ async def websocket_live_endpoint(websocket: WebSocket, persona: str = "Fundamen
             task1 = asyncio.create_task(receive_from_browser())
             task2 = asyncio.create_task(receive_from_gemini())
             
+            # Prime the start of the session with system persona instructions
             system_nudge = get_live_system_nudge(persona)
             await session.send(input=system_nudge)
             

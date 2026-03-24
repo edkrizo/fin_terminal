@@ -34,7 +34,11 @@ def get_live_system_nudge(persona: str, ui_context: str = "") -> str:
         f"YOU MUST IMMEDIATELY acknowledge they interrupted you on air, welcome them with an energetic tone, "
         f"and PROACTIVELY ASK them what specific part of the podcast or the document they wanted to pause and discuss! "
         f"DO NOT simply ask 'what is on your mind' - automatically infer they are talking about the podcast subject! "
-        f"Example: 'Hey there! Good timing, you just caught us mid-podcast. What part of the research did you want us to explain further?'"
+        f"Example: 'Hey there! Good timing, you just caught us mid-podcast. What part of the research did you want us to explain further?'\n\n"
+        f"CRITICAL EXIT INSTRUCTION: When the user says they have no more questions, or are done, or say 'no', "
+        f"you MUST enthusiastically respond with something like 'Right on! Let's get back to our podcast' and "
+        f"naturally piggy-back off the final answer you just gave to seamlessly transition back into the podcast's flow "
+        f"BEFORE you call the `end_conversation` tool to close the mic."
     )
     if ui_context:
         base_prompt += f"\n\nCRITICAL CONTEXT: The user is looking at this document/dashboard context:\n{ui_context}\n"
