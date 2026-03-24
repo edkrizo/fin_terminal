@@ -26,16 +26,11 @@ from google.genai import types
 # Execution Strategy Flag
 RUN_PARALLEL = True
 
-<<<<<<< HEAD
-# 🚀 1. FORCE ENTERPRISE VERTEX AI MODE AND GLOBAL REGION
-os.environ["GOOGLE_CLOUD_PROJECT"] = "GCP_PROJECT"
-=======
 # ---------------------------------------------------------
 # 1. ENVIRONMENT CONFIGURATION
 # ---------------------------------------------------------
 # Force Enterprise Vertex AI Mode and designate global region for deployment
 os.environ["GOOGLE_CLOUD_PROJECT"] = "YOUR_GCP_PROJECT_ID"
->>>>>>> bb0518c (Refactor (MVP): Cleaned codebase, pruned dead agents, added modular routers and extensive documentation)
 os.environ["GOOGLE_CLOUD_LOCATION"] = "global"  
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "1"
 
